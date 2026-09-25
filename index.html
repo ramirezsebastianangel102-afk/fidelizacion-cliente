@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More a la Moda - Tarjeta de Fidelización</title>
+    <style>
+        :root {
+            --rosa-viejo: #d9a7a7;
+            --rosa-oscuro: #9d5d5d;
+            --rosa-robusto: #7a3d3d;
+            --rojo-labial: #d91d36;
+            --blanco: #fffdfd;
+            --gris-claro: #f9f2f2;
+            --gris-texto: #4a3c3c;
+            --gris-suave: #e9dada;
+            --sombra: rgba(122, 61, 61, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f7e7e7 0%, #f1d6d6 40%, #ead0d0 100%);
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--gris-texto);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 32px 28px;
+            border-radius: 24px;
+            box-shadow: 0 18px 45px var(--sombra);
+            width: 100%;
+            max-width: 470px;
+            box-sizing: border-box;
+            border: 1px solid rgba(157, 93, 93, 0.08);
+        }
+
+        h2,
+        h3 {
+            color: var(--rosa-oscuro);
+            text-align: center;
+            margin: 0 0 14px;
+            letter-spacing: 0.3px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--gris-texto);
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--gris-suave);
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            background: #fff;
+            color: var(--gris-texto);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--rosa-viejo);
+            box-shadow: 0 0 0 4px rgba(217, 167, 167, 0.18);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, var(--rosa-viejo) 0%, var(--rosa-oscuro) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            margin-top: 12px;
+            box-shadow: 0 10px 20px rgba(157, 93, 93, 0.2);
+        }
+
+        button:hover {
+            filter: brightness(1.03);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .card {
+            background: linear-gradient(135deg, #d9a7a7 0%, #b97a7a 55%, #986d6d 100%);
+            color: white;
+            padding: 22px 20px 18px;
+            border-radius: 18px;
+            margin-top: 20px;
+            box-shadow: 0 18px 32px rgba(122, 61, 61, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.32);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .card-header h3 {
+            color: white;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .card-header small {
+            display: block;
+            opacity: 0.9;
+            margin-top: 2px;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .card-header strong {
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .card p {
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+
+        .stamps-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 14px;
+            border-radius: 14px;
+            gap: 8px;
+        }
+
+        .stamp {
+            width: 42px;
+            height: 42px;
+            border: 2px dashed rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .stamp.active {
+            border: 2px solid var(--rojo-labial);
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 0 0 3px rgba(217, 29, 54, 0.12);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.88rem;
+            color: var(--rosa-oscuro);
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-thickness: 1.5px;
+            text-underline-offset: 2px;
+        }
+
+        .switch-link:hover {
+            color: var(--rosa-robusto);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- VISTA 1: REGISTRO CLIENTE -->
+        <div id="view-register">
+            <h2>More a la Moda</h2>
+            <h3>Registro de Cliente</h3>
+            <form id="form-register">
+                <div class="form-group">
+                    <label>Nombres:</label>
+                    <input type="text" id="reg-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellidos:</label>
+                    <input type="text" id="reg-apellido" required>
+                </div>
+                <div class="form-group">
+                    <label>DNI:</label>
+                    <input type="text" id="reg-dni" required>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Nacimiento:</label>
+                    <input type="date" id="reg-nacimiento" required>
+                </div>
+                <div class="form-group">
+                    <label>Número de Teléfono:</label>
+                    <input type="tel" id="reg-telefono" required>
+                </div>
+                <div class="form-group">
+                    <label>Mail:</label>
+                    <input type="email" id="reg-mail" required>
+                </div>
+                <button type="submit">Generar mi Tarjeta</button>
+            </form>
+            <div class="switch-link" onclick="showView('view-login')">¿Ya tienes tarjeta? Ingresa con tu DNI</div>
+            <div class="switch-link" onclick="showView('view-admin')">Entrar como administrador</div>
+        </div>
+
+        <!-- VISTA 2: LOGIN CLIENTE (POR DNI) -->
+        <div id="view-login" class="hidden">
+            <h2>More a la Moda</h2>
+            <h3>Consultar mi Tarjeta</h3>
+            <div class="form-group">
+                <label>Ingresa tu DNI:</label>
+                <input type="text" id="login-dni">
+            </div>
+            <button onclick="consultarCliente()">Ver Tarjeta</button>
+            <div class="switch-link" onclick="showView('view-register')">Registrarse por primera vez</div>
+        </div>
+
+        <!-- VISTA 3: TARJETA VIRTUAL DEL CLIENTE -->
+        <div id="view-card" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 style="margin:0; color:white;">More a la Moda</h3>
+                        <small>Tarjeta de Fidelización</small>
+                    </div>
+                    <div><strong>N°: <span id="card-num">------</span></strong></div>
+                </div>
+                <div>
+                    <p><strong>Cliente:</strong> <span id="card-nombre-completo"></span></p>
+                    <p><strong>DNI:</strong> <span id="card-dni"></span></p>
+                </div>
+                <div class="stamps-container">
+                    <div class="stamp" id="s1">💋</div>
+                    <div class="stamp" id="s2">💋</div>
+                    <div class="stamp" id="s3">💋</div>
+                    <div class="stamp" id="s4">💋</div>
+                    <div class="stamp" id="s5">💋</div>
+                </div>
+            </div>
+            <button onclick="showView('view-login')" style="background-color: #666;">Volver</button>
+        </div>
+
+        <!-- VISTA 4: PANEL ADMINISTRADOR -->
+        <div id="view-admin" class="hidden">
+            <h2>Panel de Administrador</h2>
+            <div id="admin-login-box">
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="admin-pass">
+                </div>
+                <button onclick="verificarAdmin()">Ingresar</button>
+            </div>
+            <div id="admin-panel-box" class="hidden">
+                <h3>Otorgar Sellos</h3>
+                <div class="form-group">
+                    <label>DNI del Cliente a modificar:</label>
+                    <input type="text" id="admin-dni-cliente">
+                </div>
+                <div class="form-group">
+                    <label>Seleccionar Sello a activar (1 al 5):</label>
+                    <input type="number" id="admin-num-sello" min="1" max="5">
+                </div>
+                <button onclick="guardarSello()">Actualizar Sello</button>
+            </div>
+            <div class="switch-link" onclick="showView('view-register')">Cerrar sesión / Volver</div>
+        </div>
+    </div>
+
+    <script>
+        const URL_API = 'https://script.google.com/macros/s/AKfycbyl_PaEMXvvhwskgyQvE5TCWU9G7hBm-I9-irCjO6owZ_UZAgnWhsUZmDSI55X-JnDU8Q/exec';
+        const STORAGE_KEY = 'more_a_la_moda_clientes';
+
+        function getLocalClientes() {
+            const datos = localStorage.getItem(STORAGE_KEY);
+            return datos ? JSON.parse(datos) : [];
+        }
+
+        function saveLocalClientes(clientes) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(clientes));
+        }
+
+        function getLocalClienteByDni(dni) {
+            return getLocalClientes().find(cliente => String(cliente.dni) === String(dni));
+        }
+
+        function generateLocalClientNumber() {
+            const clientes = getLocalClientes();
+            let numero = '';
+            do {
+                numero = String(Math.floor(100000 + Math.random() * 900000));
+            } while (clientes.some(cliente => cliente.numeroCliente === numero));
+            return numero;
+        }
+
+        function registrarLocalCliente(payload) {
+            const clientes = getLocalClientes();
+            const dni = String(payload.dni || '').trim();
+
+            if (clientes.some(cliente => String(cliente.dni) === dni)) {
+                return { success: false, message: 'El DNI ya se encuentra registrado.' };
+            }
+
+            const nuevoCliente = {
+                numeroCliente: generateLocalClientNumber(),
+                nombre: String(payload.nombre || '').trim(),
+                apellido: String(payload.apellido || '').trim(),
+                dni: dni,
+                nacimiento: payload.nacimiento || '',
+                telefono: String(payload.telefono || '').trim(),
+                mail: String(payload.mail || '').trim(),
+                sellos: [0, 0, 0, 0, 0]
+            };
+
+            clientes.push(nuevoCliente);
+            saveLocalClientes(clientes);
+            return { success: true, cliente: nuevoCliente };
+        }
+
+        function consultarLocalCliente(dni) {
+            const cliente = getLocalClienteByDni(dni);
+            return cliente ? { success: true, cliente } : { success: false, message: 'Cliente no encontrado' };
+        }
+
+        function actualizarLocalSello(dni, selloNum) {
+            const clientes = getLocalClientes();
+            const index = clientes.findIndex(cliente => String(cliente.dni) === String(dni));
+
+            if (index === -1) {
+                return { success: false, message: 'Cliente no encontrado' };
+            }
+
+            clientes[index].sellos[selloNum - 1] = 1;
+            saveLocalClientes(clientes);
+            return { success: true, cliente: clientes[index] };
+        }
+
+        function showView(viewId) {
+            document.getElementById('view-register').classList.add('hidden');
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-card').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+
+            if (viewId === 'view-admin') {
+                document.getElementById('admin-login-box').classList.remove('hidden');
+                document.getElementById('admin-panel-box').classList.add('hidden');
+                document.getElementById('admin-pass').value = '';
+            }
+        }
+
+        function mostrarTarjeta(cliente) {
+            if (!cliente) return;
+
+            document.getElementById('card-num').innerText = cliente.numeroCliente || '------';
+            document.getElementById('card-nombre-completo').innerText = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
+            document.getElementById('card-dni').innerText = cliente.dni || '';
+
+            for (let i = 1; i <= 5; i++) {
+                const stampEl = document.getElementById('s' + i);
+                const activo = Number(cliente.sellos?.[i - 1] ?? 0) === 1;
+                stampEl.classList.toggle('active', activo);
+            }
+
+            showView('view-card');
+        }
+
+        async function registrarClienteConFallback(payload) {
+            if (!URL_API || !URL_API.startsWith('http')) {
+                return registrarLocalCliente(payload);
+            }
+
+            try {
+                const response = await fetch(URL_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP no OK');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.warn('Fallo en Google Sheets, usando almacenamiento local:', error);
+                return registrarLocalCliente(payload);
+            }
+        }
+
+        async function consultarClienteConFallback(dni) {
+            if (!URL_API || !URL_API.startsWith('http')) {
+                return consultarLocalCliente(dni);
+            }
+
+            try {
+                const response = await fetch(`${URL_API}?accion=consultar&dni=${encodeURIComponent(dni)}`);
+                if (!response.ok) {
+                    throw new Error('HTTP no OK');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.warn('Fallo al consultar Google Sheets, usando almacenamiento local:', error);
+                return consultarLocalCliente(dni);
+            }
+        }
+
+        async function actualizarSelloConFallback(dni, selloNum) {
+            if (!URL_API || !URL_API.startsWith('http')) {
+                return actualizarLocalSello(dni, selloNum);
+            }
+
+            try {
+                const response = await fetch(URL_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accion: 'actualizarSello', dni, selloNum })
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP no OK');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.warn('Fallo al actualizar Google Sheets, usando almacenamiento local:', error);
+                return actualizarLocalSello(dni, selloNum);
+            }
+        }
+
+        document.getElementById('form-register').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const payload = {
+                accion: 'registrar',
+                nombre: document.getElementById('reg-nombre').value.trim(),
+                apellido: document.getElementById('reg-apellido').value.trim(),
+                dni: document.getElementById('reg-dni').value.trim(),
+                nacimiento: document.getElementById('reg-nacimiento').value,
+                telefono: document.getElementById('reg-telefono').value.trim(),
+                mail: document.getElementById('reg-mail').value.trim()
+            };
+
+            const data = await registrarClienteConFallback(payload);
+
+            if (data.success) {
+                alert('¡Registro exitoso! Tu tarjeta ha sido creada.');
+                mostrarTarjeta(data.cliente);
+                this.reset();
+            } else {
+                alert('Error: ' + (data.message || 'No se pudo registrar'));
+            }
+        });
+
+        async function consultarCliente() {
+            const dni = document.getElementById('login-dni').value.trim();
+            if (!dni) {
+                alert('Por favor ingresa tu DNI');
+                return;
+            }
+
+            const data = await consultarClienteConFallback(dni);
+
+            if (data.success) {
+                mostrarTarjeta(data.cliente);
+            } else {
+                alert('Cliente no encontrado con ese DNI.');
+            }
+        }
+
+        function verificarAdmin() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'Isabell@') {
+                document.getElementById('admin-login-box').classList.add('hidden');
+                document.getElementById('admin-panel-box').classList.remove('hidden');
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        async function guardarSello() {
+            const dni = document.getElementById('admin-dni-cliente').value.trim();
+            const selloNum = Number(document.getElementById('admin-num-sello').value);
+
+            if (!dni || !Number.isInteger(selloNum) || selloNum < 1 || selloNum > 5) {
+                alert('Ingresá un DNI válido y un número de sello del 1 al 5.');
+                return;
+            }
+
+            const data = await actualizarSelloConFallback(dni, selloNum);
+
+            if (data.success) {
+                alert('¡Sello actualizado con éxito!');
+                mostrarTarjeta(data.cliente);
+            } else {
+                alert('No se pudo actualizar: ' + (data.message || 'Cliente no encontrado'));
+            }
+        }
+    </script>
+</body>
+
+</html>
