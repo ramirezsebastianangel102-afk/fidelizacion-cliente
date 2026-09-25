@@ -195,6 +195,12 @@
             box-shadow: 0 0 0 3px rgba(217, 29, 54, 0.12);
         }
 
+        .stamp-summary {
+            margin: 14px 0 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
         .hidden {
             display: none;
         }
@@ -281,12 +287,14 @@
                     <p><strong>DNI:</strong> <span id="card-dni"></span></p>
                 </div>
                 <div class="stamps-container">
-                    <div class="stamp" id="s1">💋</div>
-                    <div class="stamp" id="s2">💋</div>
-                    <div class="stamp" id="s3">💋</div>
-                    <div class="stamp" id="s4">💋</div>
-                    <div class="stamp" id="s5">💋</div>
+                    <div class="stamp" id="s1"></div>
+                    <div class="stamp" id="s2"></div>
+                    <div class="stamp" id="s3"></div>
+                    <div class="stamp" id="s4"></div>
+                    <div class="stamp" id="s5"></div>
                 </div>
+                <p class="stamp-summary"><strong>Sellos acumulados:</strong> <span id="card-total-sellos">0 de 5</span>
+                </p>
             </div>
             <button onclick="showView('view-login')" style="background-color: #666;">Volver</button>
         </div>
@@ -318,7 +326,7 @@
     </div>
 
     <script>
-        const URL_API = 'https://script.google.com/macros/s/AKfycbyl_PaEMXvvhwskgyQvE5TCWU9G7hBm-I9-irCjO6owZ_UZAgnWhsUZmDSI55X-JnDU8Q/exec';
+        const URL_API = 'https://script.google.com/macros/s/AKfycbzhEieKvDLeakU3t4b-QTzgqBDUxZpaBreHPXqoj6dfcJiiTdMbeI0CbeuWIB-IKHUcxA/exec';
         const STORAGE_KEY = 'more_a_la_moda_clientes';
 
         function getLocalClientes() {
@@ -406,12 +414,17 @@
             document.getElementById('card-nombre-completo').innerText = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
             document.getElementById('card-dni').innerText = cliente.dni || '';
 
+            let totalSellos = 0;
             for (let i = 1; i <= 5; i++) {
                 const stampEl = document.getElementById('s' + i);
-                const activo = Number(cliente.sellos?.[i - 1] ?? 0) === 1;
+                const valorSello = cliente.sellos?.[i - 1];
+                const activo = valorSello === true || String(valorSello).toLowerCase() === 'true' || Number(valorSello) === 1;
                 stampEl.classList.toggle('active', activo);
+                stampEl.textContent = activo ? '💋' : '';
+                if (activo) totalSellos++;
             }
 
+            document.getElementById('card-total-sellos').innerText = `${totalSellos} de 5`;
             showView('view-card');
         }
 

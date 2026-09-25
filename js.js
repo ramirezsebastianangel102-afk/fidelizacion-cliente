@@ -17,13 +17,17 @@ function obtenerClienteDesdeFila(row) {
         telefono: row[5],
         mail: row[6],
         sellos: [
-            Number(row[7]) || 0,
-            Number(row[8]) || 0,
-            Number(row[9]) || 0,
-            Number(row[10]) || 0,
-            Number(row[11]) || 0
+            convertirSello(row[7]),
+            convertirSello(row[8]),
+            convertirSello(row[9]),
+            convertirSello(row[10]),
+            convertirSello(row[11])
         ]
     };
+}
+
+function convertirSello(valor) {
+    return valor === true || String(valor).toLowerCase() === 'true' || Number(valor) === 1 ? 1 : 0;
 }
 
 function buscarFilaPorDni(dni) {

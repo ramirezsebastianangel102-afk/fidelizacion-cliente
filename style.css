@@ -131,6 +131,12 @@ button:hover {
     background: white;
 }
 
+.stamp-summary {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 14px;
+}
+
 /* Clases de utilidad */
 .hidden {
     display: none;
