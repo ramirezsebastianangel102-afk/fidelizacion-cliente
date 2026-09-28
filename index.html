@@ -77,7 +77,8 @@
             letter-spacing: 0.02em;
         }
 
-        input {
+        input,
+        select {
             width: 100%;
             padding: 12px 14px;
             border: 1.5px solid var(--gris-suave);
@@ -89,7 +90,8 @@
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
-        input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--rosa-viejo);
             box-shadow: 0 0 0 4px rgba(217, 167, 167, 0.18);
@@ -295,6 +297,9 @@
                 </div>
                 <p class="stamp-summary"><strong>Sellos acumulados:</strong> <span id="card-total-sellos">0 de 5</span>
                 </p>
+                <p><strong>Descuentos obtenidos:</strong> <span id="card-descuentos">0</span></p>
+                <p><strong>Última fecha de compra:</strong> <span id="card-ultima-compra">Sin compras registradas</span>
+                </p>
             </div>
             <button onclick="showView('view-login')" style="background-color: #666;">Volver</button>
         </div>
@@ -312,14 +317,33 @@
             <div id="admin-panel-box" class="hidden">
                 <h3>Otorgar Sellos</h3>
                 <div class="form-group">
-                    <label>DNI del Cliente a modificar:</label>
-                    <input type="text" id="admin-dni-cliente">
+                    <label for="admin-buscar-dni">Buscar cliente por DNI:</label>
+                    <input type="search" id="admin-buscar-dni" inputmode="numeric" autocomplete="off"
+                        placeholder="Escribe el DNI">
                 </div>
                 <div class="form-group">
-                    <label>Seleccionar Sello a activar (1 al 5):</label>
-                    <input type="number" id="admin-num-sello" min="1" max="5">
+                    <label for="admin-cliente">Selecciona el cliente:</label>
+                    <select id="admin-cliente">
+                        <option value="">Cargando clientes...</option>
+                    </select>
                 </div>
-                <button onclick="guardarSello()">Actualizar Sello</button>
+                <div id="admin-estampas">
+                    <p id="admin-sello-cliente">Elige un cliente para ver sus estampas.</p>
+                    <div class="stamps-container" role="group" aria-label="Estampas del cliente">
+                        <div class="stamp" id="admin-s1"></div>
+                        <div class="stamp" id="admin-s2"></div>
+                        <div class="stamp" id="admin-s3"></div>
+                        <div class="stamp" id="admin-s4"></div>
+                        <div class="stamp" id="admin-s5"></div>
+                    </div>
+                    <p class="stamp-summary"><strong>Sellos acumulados:</strong> <span id="admin-total-sellos">0 de
+                            5</span></p>
+                    <p><strong>Descuentos obtenidos:</strong> <span id="admin-descuentos">0</span></p>
+                    <p><strong>Última fecha de compra:</strong> <span id="admin-ultima-compra">Sin compras
+                            registradas</span></p>
+                </div>
+                <button id="admin-agregar-sello" onclick="guardarSello()">Agregar siguiente estampado</button>
+                <p id="admin-sello-mensaje" class="hidden" role="status" aria-live="polite"></p>
             </div>
             <div class="switch-link" onclick="showView('view-register')">Cerrar sesión / Volver</div>
         </div>
@@ -327,7 +351,26 @@
 
     <script>
         const URL_API = 'https://script.google.com/macros/s/AKfycbzhEieKvDLeakU3t4b-QTzgqBDUxZpaBreHPXqoj6dfcJiiTdMbeI0CbeuWIB-IKHUcxA/exec';
+        const URL_TARJETA_PUBLICA = '';
         const STORAGE_KEY = 'more_a_la_moda_clientes';
+        const TOTAL_SELLOS = 5;
+        let claveAdminSesion = '';
+        let clientesAdmin = [];
+
+        function obtenerUrlTarjeta() {
+            if (URL_TARJETA_PUBLICA.trim()) {
+                return URL_TARJETA_PUBLICA.trim();
+            }
+
+            if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+                return '';
+            }
+
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.hash = '';
+            return url.toString();
+        }
 
         function getLocalClientes() {
             const datos = localStorage.getItem(STORAGE_KEY);
@@ -372,7 +415,7 @@
 
             clientes.push(nuevoCliente);
             saveLocalClientes(clientes);
-            return { success: true, cliente: nuevoCliente };
+            return { success: true, cliente: nuevoCliente, emailEnviado: false };
         }
 
         function consultarLocalCliente(dni) {
@@ -380,7 +423,7 @@
             return cliente ? { success: true, cliente } : { success: false, message: 'Cliente no encontrado' };
         }
 
-        function actualizarLocalSello(dni, selloNum) {
+        function actualizarLocalSello(dni) {
             const clientes = getLocalClientes();
             const index = clientes.findIndex(cliente => String(cliente.dni) === String(dni));
 
@@ -388,9 +431,24 @@
                 return { success: false, message: 'Cliente no encontrado' };
             }
 
-            clientes[index].sellos[selloNum - 1] = 1;
+            const cliente = clientes[index];
+            const siguienteSello = cliente.sellos.findIndex(sello =>
+                !(sello === true || String(sello).toLowerCase() === 'true' || Number(sello) === 1)
+            );
+
+            if (siguienteSello === -1) {
+                return { success: true, completo: true, estampaAgregada: false, cliente };
+            }
+
+            cliente.sellos[siguienteSello] = 1;
             saveLocalClientes(clientes);
-            return { success: true, cliente: clientes[index] };
+            return {
+                success: true,
+                completo: siguienteSello + 1 === TOTAL_SELLOS,
+                estampaAgregada: true,
+                emailEnviado: false,
+                cliente
+            };
         }
 
         function showView(viewId) {
@@ -401,9 +459,17 @@
             document.getElementById(viewId).classList.remove('hidden');
 
             if (viewId === 'view-admin') {
+                claveAdminSesion = '';
+                clientesAdmin = [];
                 document.getElementById('admin-login-box').classList.remove('hidden');
                 document.getElementById('admin-panel-box').classList.add('hidden');
                 document.getElementById('admin-pass').value = '';
+                document.getElementById('admin-buscar-dni').value = '';
+                document.getElementById('admin-cliente').innerHTML = '<option value="">Inicia sesión para cargar clientes</option>';
+                document.getElementById('admin-sello-cliente').textContent = 'Elige un cliente para ver sus estampas.';
+                mostrarSellosAdmin([]);
+                document.getElementById('admin-sello-mensaje').classList.add('hidden');
+                document.getElementById('admin-sello-mensaje').textContent = '';
             }
         }
 
@@ -425,7 +491,62 @@
             }
 
             document.getElementById('card-total-sellos').innerText = `${totalSellos} de 5`;
+            document.getElementById('card-descuentos').textContent = cliente.descuentosObtenidos || 0;
+            document.getElementById('card-ultima-compra').textContent = formatearFechaCompra(cliente.ultimaCompra);
             showView('view-card');
+        }
+
+        function formatearFechaCompra(valor) {
+            if (!valor) return 'Sin compras registradas';
+            const fecha = new Date(valor);
+            if (Number.isNaN(fecha.getTime())) return String(valor);
+            return new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' }).format(fecha);
+        }
+
+        function mostrarSellosAdmin(sellos) {
+            let totalSellos = 0;
+            for (let i = 1; i <= TOTAL_SELLOS; i++) {
+                const stampEl = document.getElementById('admin-s' + i);
+                const valorSello = sellos?.[i - 1];
+                const activo = valorSello === true || String(valorSello).toLowerCase() === 'true' || Number(valorSello) === 1;
+                stampEl.classList.toggle('active', activo);
+                stampEl.textContent = activo ? '💋' : '';
+                stampEl.setAttribute('aria-label', `Estampa ${i}: ${activo ? 'sumada' : 'pendiente'}`);
+                if (activo) totalSellos++;
+            }
+
+            document.getElementById('admin-total-sellos').textContent = `${totalSellos} de ${TOTAL_SELLOS}`;
+        }
+
+        function mostrarSellosClienteSeleccionado() {
+            const numeroCliente = document.getElementById('admin-cliente').value;
+            const cliente = clientesAdmin.find(item => item.numeroCliente === numeroCliente);
+            document.getElementById('admin-sello-cliente').textContent = cliente
+                ? `Estampas de ${cliente.nombre} ${cliente.apellido} · N° ${cliente.numeroCliente}`
+                : 'Elige un cliente para ver sus estampas.';
+            mostrarSellosAdmin(cliente ? cliente.sellos : []);
+            document.getElementById('admin-descuentos').textContent = cliente ? cliente.descuentosObtenidos || 0 : '0';
+            document.getElementById('admin-ultima-compra').textContent = formatearFechaCompra(cliente && cliente.ultimaCompra);
+        }
+
+        function filtrarClientesAdmin() {
+            const busqueda = document.getElementById('admin-buscar-dni').value.trim();
+            const selector = document.getElementById('admin-cliente');
+            const coincidencias = clientesAdmin.filter(cliente => String(cliente.dni || '').includes(busqueda));
+
+            selector.innerHTML = `<option value="">${coincidencias.length ? 'Selecciona un cliente' : 'No hay clientes con ese DNI'}</option>`;
+            coincidencias.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.numeroCliente;
+                option.textContent = `${cliente.apellido}, ${cliente.nombre} · DNI ${cliente.dni} · N° ${cliente.numeroCliente}`;
+                selector.appendChild(option);
+            });
+
+            const coincidenciaExacta = coincidencias.filter(cliente => String(cliente.dni || '') === busqueda);
+            if (busqueda && coincidenciaExacta.length === 1) {
+                selector.value = coincidenciaExacta[0].numeroCliente;
+            }
+            mostrarSellosClienteSeleccionado();
         }
 
         async function registrarClienteConFallback(payload) {
@@ -471,28 +592,18 @@
             }
         }
 
-        async function actualizarSelloConFallback(dni, selloNum) {
-            if (!URL_API || !URL_API.startsWith('http')) {
-                return actualizarLocalSello(dni, selloNum);
+        async function solicitarAdmin(payload) {
+            const response = await fetch(URL_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudo conectar con el servidor.');
             }
 
-            try {
-                const response = await fetch(URL_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ accion: 'actualizarSello', dni, selloNum })
-                });
-
-                if (!response.ok) {
-                    throw new Error('HTTP no OK');
-                }
-
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.warn('Fallo al actualizar Google Sheets, usando almacenamiento local:', error);
-                return actualizarLocalSello(dni, selloNum);
-            }
+            return response.json();
         }
 
         document.getElementById('form-register').addEventListener('submit', async function (e) {
@@ -505,13 +616,23 @@
                 dni: document.getElementById('reg-dni').value.trim(),
                 nacimiento: document.getElementById('reg-nacimiento').value,
                 telefono: document.getElementById('reg-telefono').value.trim(),
-                mail: document.getElementById('reg-mail').value.trim()
+                mail: document.getElementById('reg-mail').value.trim(),
+                urlTarjeta: obtenerUrlTarjeta()
             };
 
             const data = await registrarClienteConFallback(payload);
 
             if (data.success) {
-                alert('¡Registro exitoso! Tu tarjeta ha sido creada.');
+                let mensaje = '¡Registro exitoso! Tu tarjeta ha sido creada.';
+                if (data.emailEnviado === true) {
+                    mensaje += ' Te enviamos un correo de bienvenida.';
+                    if (data.enlaceIncluido === false) {
+                        mensaje += ' Falta configurar la URL pública para incluir el enlace a la tarjeta.';
+                    }
+                } else if (data.emailEnviado === false) {
+                    mensaje += ' No se pudo enviar el correo de bienvenida.';
+                }
+                alert(mensaje);
                 mostrarTarjeta(data.cliente);
                 this.reset();
             } else {
@@ -535,30 +656,94 @@
             }
         }
 
-        function verificarAdmin() {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === 'Isabell@') {
+        async function verificarAdmin() {
+            const clave = document.getElementById('admin-pass').value;
+
+            if (!clave) {
+                alert('Ingresa la contraseña de administrador.');
+                return;
+            }
+
+            try {
+                const data = await solicitarAdmin({ accion: 'listarClientesAdmin', claveAdmin: clave });
+                if (!data.success) {
+                    throw new Error(data.message || 'No se pudo validar la contraseña.');
+                }
+
+                claveAdminSesion = clave;
+                clientesAdmin = data.clientes;
+                const selector = document.getElementById('admin-cliente');
+                selector.onchange = mostrarSellosClienteSeleccionado;
+                document.getElementById('admin-buscar-dni').oninput = filtrarClientesAdmin;
+
                 document.getElementById('admin-login-box').classList.add('hidden');
                 document.getElementById('admin-panel-box').classList.remove('hidden');
-            } else {
-                alert('Contraseña incorrecta');
+                document.getElementById('admin-sello-mensaje').classList.add('hidden');
+                filtrarClientesAdmin();
+            } catch (error) {
+                alert(error.message || 'No se pudo validar el acceso.');
             }
         }
 
         async function guardarSello() {
-            const dni = document.getElementById('admin-dni-cliente').value.trim();
-            const selloNum = Number(document.getElementById('admin-num-sello').value);
+            const selector = document.getElementById('admin-cliente');
+            const numeroCliente = selector.value;
+            const mensaje = document.getElementById('admin-sello-mensaje');
 
-            if (!dni || !Number.isInteger(selloNum) || selloNum < 1 || selloNum > 5) {
-                alert('Ingresá un DNI válido y un número de sello del 1 al 5.');
+            if (!numeroCliente) {
+                alert('Selecciona un cliente.');
                 return;
             }
 
-            const data = await actualizarSelloConFallback(dni, selloNum);
+            let data;
+            const botonAgregar = document.getElementById('admin-agregar-sello');
+            botonAgregar.disabled = true;
+            try {
+                data = await solicitarAdmin({
+                    accion: 'actualizarSello',
+                    numeroCliente,
+                    claveAdmin: claveAdminSesion,
+                    urlTarjeta: obtenerUrlTarjeta()
+                });
+            } catch (error) {
+                alert(error.message || 'No se pudo actualizar el sello.');
+                return;
+            } finally {
+                botonAgregar.disabled = false;
+            }
 
             if (data.success) {
-                alert('¡Sello actualizado con éxito!');
-                mostrarTarjeta(data.cliente);
+                const clienteActual = clientesAdmin.find(cliente => cliente.numeroCliente === numeroCliente);
+                if (clienteActual) {
+                    clienteActual.sellos = data.cliente.sellos;
+                    clienteActual.descuentosObtenidos = data.cliente.descuentosObtenidos;
+                    clienteActual.ultimaCompra = data.cliente.ultimaCompra;
+                }
+                mostrarSellosClienteSeleccionado();
+
+                const totalSellos = data.cliente.sellos.filter(sello =>
+                    sello === true || String(sello).toLowerCase() === 'true' || Number(sello) === 1
+                ).length;
+                if (data.descuentoAcreditado) {
+                    mensaje.textContent = `¡Descuento del 10% acreditado! Se reiniciaron las estampas para comenzar un nuevo ciclo. Descuentos acumulados: ${data.cliente.descuentosObtenidos}.`;
+                } else if (data.estampaAgregada === false && data.completo) {
+                    mensaje.textContent = `Este cliente ya tiene la totalidad de los ${TOTAL_SELLOS} estampados de labios.`;
+                } else {
+                    mensaje.textContent = `Estampado agregado. El cliente tiene ${totalSellos} de ${TOTAL_SELLOS}.`;
+                }
+                if (data.emailEnviado === true) {
+                    mensaje.textContent += data.descuentoAcreditado
+                        ? ' Se envió el correo de felicitación.'
+                        : ' Se envió un correo al cliente.';
+                    if (data.enlaceIncluido === false) {
+                        mensaje.textContent += ' Falta configurar la URL pública para incluir el enlace.';
+                    }
+                } else if (data.emailEnviado === false) {
+                    mensaje.textContent += ' No se pudo enviar el correo al cliente.';
+                } else {
+                    mensaje.textContent += ' El servidor no informó el estado del correo; revisa el despliegue de Apps Script.';
+                }
+                mensaje.classList.remove('hidden');
             } else {
                 alert('No se pudo actualizar: ' + (data.message || 'Cliente no encontrado'));
             }
