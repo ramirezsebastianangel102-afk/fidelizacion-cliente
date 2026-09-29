@@ -254,7 +254,7 @@
                 </div>
                 <div class="form-group">
                     <label>Mail:</label>
-                    <input type="email" id="reg-mail" required>
+                    <input type="text" id="reg-mail" inputmode="email" placeholder="ej: isabell@gmail.com" required>
                 </div>
                 <button type="submit">Generar mi Tarjeta</button>
             </form>
@@ -309,8 +309,12 @@
             <h2>Panel de Administrador</h2>
             <div id="admin-login-box">
                 <div class="form-group">
-                    <label>Contraseña:</label>
-                    <input type="password" id="admin-pass">
+                    <label for="admin-email">Correo:</label>
+                    <input type="email" id="admin-email" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-pass">Contraseña:</label>
+                    <input type="password" id="admin-pass" autocomplete="current-password" required>
                 </div>
                 <button onclick="verificarAdmin()">Ingresar</button>
             </div>
@@ -354,6 +358,7 @@
         const URL_TARJETA_PUBLICA = '';
         const STORAGE_KEY = 'more_a_la_moda_clientes';
         const TOTAL_SELLOS = 5;
+        let correoAdminSesion = '';
         let claveAdminSesion = '';
         let clientesAdmin = [];
 
@@ -459,10 +464,12 @@
             document.getElementById(viewId).classList.remove('hidden');
 
             if (viewId === 'view-admin') {
+                correoAdminSesion = '';
                 claveAdminSesion = '';
                 clientesAdmin = [];
                 document.getElementById('admin-login-box').classList.remove('hidden');
                 document.getElementById('admin-panel-box').classList.add('hidden');
+                document.getElementById('admin-email').value = '';
                 document.getElementById('admin-pass').value = '';
                 document.getElementById('admin-buscar-dni').value = '';
                 document.getElementById('admin-cliente').innerHTML = '<option value="">Inicia sesión para cargar clientes</option>';
@@ -657,19 +664,21 @@
         }
 
         async function verificarAdmin() {
+            const correo = document.getElementById('admin-email').value.trim();
             const clave = document.getElementById('admin-pass').value;
 
-            if (!clave) {
-                alert('Ingresa la contraseña de administrador.');
+            if (!correo || !clave) {
+                alert('Ingresa el correo y la contraseña de administrador.');
                 return;
             }
 
             try {
-                const data = await solicitarAdmin({ accion: 'listarClientesAdmin', claveAdmin: clave });
+                const data = await solicitarAdmin({ accion: 'listarClientesAdmin', correoAdmin: correo, claveAdmin: clave });
                 if (!data.success) {
-                    throw new Error(data.message || 'No se pudo validar la contraseña.');
+                    throw new Error(data.message || 'No se pudo validar el acceso.');
                 }
 
+                correoAdminSesion = correo;
                 claveAdminSesion = clave;
                 clientesAdmin = data.clientes;
                 const selector = document.getElementById('admin-cliente');
@@ -702,6 +711,7 @@
                 data = await solicitarAdmin({
                     accion: 'actualizarSello',
                     numeroCliente,
+                    correoAdmin: correoAdminSesion,
                     claveAdmin: claveAdminSesion,
                     urlTarjeta: obtenerUrlTarjeta()
                 });

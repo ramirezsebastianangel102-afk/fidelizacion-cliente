@@ -1,4 +1,4 @@
-var hojaSpreadsheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+var hojaSpreadsheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Clientes');
 var TOTAL_SELLOS = 5;
 var ENCABEZADO_DESCUENTOS = 'Cantidad de veces que accedio a un descuento';
 var ENCABEZADO_ULTIMA_COMPRA = 'Ultima fecha de compra';
@@ -256,9 +256,29 @@ function buscarFilaPorNumeroCliente(numeroCliente) {
     return null;
 }
 
-function validarClaveAdmin(clave) {
-    var claveConfigurada = PropertiesService.getScriptProperties().getProperty('CLAVE_ADMIN');
-    return Boolean(claveConfigurada && String(clave || '') === claveConfigurada);
+function validarAdmin(correo, clave) {
+    var hojaAdministradores = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Administradores');
+    if (!hojaAdministradores || hojaAdministradores.getLastRow() < 2) {
+        return false;
+    }
+
+    var filas = hojaAdministradores.getDataRange().getValues();
+    var encabezados = filas[0].map(normalizarEncabezado);
+    var columnaCorreo = encabezados.indexOf('correo');
+    var columnaRol = encabezados.indexOf('rol');
+    var columnaClave = encabezados.indexOf('contrasena');
+    if (columnaCorreo < 0 || columnaRol < 0 || columnaClave < 0) {
+        return false;
+    }
+
+    var correoBuscado = String(correo || '').trim().toLowerCase();
+    var rolesPermitidos = ['admin', 'administrador', 'administradora', 'administradores', 'administradoras'];
+    return filas.slice(1).some(function (fila) {
+        var rol = normalizarEncabezado(fila[columnaRol]);
+        return String(fila[columnaCorreo] || '').trim().toLowerCase() === correoBuscado &&
+            rolesPermitidos.indexOf(rol) !== -1 &&
+            String(fila[columnaClave] || '') === String(clave || '');
+    });
 }
 
 function buscarNumeroClienteUnico() {
@@ -291,15 +311,15 @@ function doPost(e) {
     }
 
     if (accion === 'listarClientesAdmin') {
-        if (!validarClaveAdmin(data.claveAdmin)) {
-            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Clave de administrador incorrecta o no configurada.' })).setMimeType(ContentService.MimeType.JSON);
+        if (!validarAdmin(data.correoAdmin, data.claveAdmin)) {
+            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Correo, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
         }
         return listarClientesAdmin();
     }
 
     if (accion === 'actualizarSello') {
-        if (!validarClaveAdmin(data.claveAdmin)) {
-            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Clave de administrador incorrecta o no configurada.' })).setMimeType(ContentService.MimeType.JSON);
+        if (!validarAdmin(data.correoAdmin, data.claveAdmin)) {
+            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Correo, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
         }
         return actualizarSelloCliente(data);
     }
