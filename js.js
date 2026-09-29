@@ -256,6 +256,21 @@ function buscarFilaPorNumeroCliente(numeroCliente) {
     return null;
 }
 
+function obtenerIndiceColumnaPorAlias(encabezados, aliases) {
+    var aliasNormalizados = aliases.map(function (alias) {
+        return normalizarEncabezado(alias);
+    });
+
+    for (var i = 0; i < encabezados.length; i++) {
+        var encabezadoNormalizado = normalizarEncabezado(encabezados[i]);
+        if (aliasNormalizados.indexOf(encabezadoNormalizado) !== -1) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 function validarAdmin(correo, clave) {
     var hojaAdministradores = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Administradores');
     if (!hojaAdministradores || hojaAdministradores.getLastRow() < 2) {
@@ -264,20 +279,23 @@ function validarAdmin(correo, clave) {
 
     var filas = hojaAdministradores.getDataRange().getValues();
     var encabezados = filas[0].map(normalizarEncabezado);
-    var columnaCorreo = encabezados.indexOf('correo');
-    var columnaRol = encabezados.indexOf('rol');
-    var columnaClave = encabezados.indexOf('contrasena');
+    var columnaCorreo = obtenerIndiceColumnaPorAlias(encabezados, ['correo', 'email', 'mail', 'usuario', 'correo electronico', 'e-mail']);
+    var columnaRol = obtenerIndiceColumnaPorAlias(encabezados, ['rol', 'role', 'tipo', 'perfil']);
+    var columnaClave = obtenerIndiceColumnaPorAlias(encabezados, ['contrasena', 'password', 'clave', 'pass', 'contraseña']);
+
     if (columnaCorreo < 0 || columnaRol < 0 || columnaClave < 0) {
         return false;
     }
 
     var correoBuscado = String(correo || '').trim().toLowerCase();
-    var rolesPermitidos = ['admin', 'administrador', 'administradora', 'administradores', 'administradoras'];
+    var claveBuscada = String(clave || '').trim();
+    var rolesPermitidos = ['admin', 'administrador', 'administradora', 'administradores', 'administradoras', 'superadmin', 'superadministrador'];
+
     return filas.slice(1).some(function (fila) {
         var rol = normalizarEncabezado(fila[columnaRol]);
         return String(fila[columnaCorreo] || '').trim().toLowerCase() === correoBuscado &&
             rolesPermitidos.indexOf(rol) !== -1 &&
-            String(fila[columnaClave] || '') === String(clave || '');
+            String(fila[columnaClave] || '').trim() === claveBuscada;
     });
 }
 
