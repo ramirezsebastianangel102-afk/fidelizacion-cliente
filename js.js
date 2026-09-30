@@ -1,9 +1,21 @@
-var hojaSpreadsheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Clientes');
+var ID_SPREADSHEET = 'REEMPLAZAR_CON_EL_ID_DEL_GOOGLE_SHEET_OFICIAL';
+var libroSpreadsheet;
+var hojaSpreadsheet;
 var TOTAL_SELLOS = 5;
 var ENCABEZADO_DESCUENTOS = 'Cantidad de veces que accedio a un descuento';
 var ENCABEZADO_ULTIMA_COMPRA = 'Ultima fecha de compra';
 
 function inicializarHoja() {
+    if (ID_SPREADSHEET === 'REEMPLAZAR_CON_EL_ID_DEL_GOOGLE_SHEET_OFICIAL') {
+        throw new Error('Configura el ID del Google Sheet oficial en ID_SPREADSHEET.');
+    }
+
+    libroSpreadsheet = SpreadsheetApp.openById(ID_SPREADSHEET);
+    hojaSpreadsheet = libroSpreadsheet.getSheetByName('Clientes');
+    if (!hojaSpreadsheet) {
+        throw new Error('No existe la pestaña Clientes en el Google Sheet configurado.');
+    }
+
     var headers = ['NumeroCliente', 'Nombre', 'Apellido', 'DNI', 'Nacimiento', 'Telefono', 'Mail', 'Sello1', 'Sello2', 'Sello3', 'Sello4', 'Sello5'];
     if (hojaSpreadsheet.getLastRow() === 0) {
         hojaSpreadsheet.appendRow(headers);
@@ -271,29 +283,32 @@ function obtenerIndiceColumnaPorAlias(encabezados, aliases) {
     return -1;
 }
 
-function validarAdmin(correo, clave) {
-    var hojaAdministradores = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Administradores');
+function validarAdmin(dni, clave) {
+    var hojaAdministradores = libroSpreadsheet.getSheetByName('Administradores');
     if (!hojaAdministradores || hojaAdministradores.getLastRow() < 2) {
         return false;
     }
 
     var filas = hojaAdministradores.getDataRange().getValues();
     var encabezados = filas[0].map(normalizarEncabezado);
-    var columnaCorreo = obtenerIndiceColumnaPorAlias(encabezados, ['correo', 'email', 'mail', 'usuario', 'correo electronico', 'e-mail']);
+    var columnaDni = obtenerIndiceColumnaPorAlias(encabezados, ['dni', 'documento', 'numero documento', 'nro documento']);
+    if (columnaDni < 0) {
+        columnaDni = 0;
+    }
     var columnaRol = obtenerIndiceColumnaPorAlias(encabezados, ['rol', 'role', 'tipo', 'perfil']);
     var columnaClave = obtenerIndiceColumnaPorAlias(encabezados, ['contrasena', 'password', 'clave', 'pass', 'contraseña']);
 
-    if (columnaCorreo < 0 || columnaRol < 0 || columnaClave < 0) {
+    if (columnaRol < 0 || columnaClave < 0) {
         return false;
     }
 
-    var correoBuscado = String(correo || '').trim().toLowerCase();
+    var dniBuscado = String(dni || '').trim();
     var claveBuscada = String(clave || '').trim();
     var rolesPermitidos = ['admin', 'administrador', 'administradora', 'administradores', 'administradoras', 'superadmin', 'superadministrador'];
 
     return filas.slice(1).some(function (fila) {
         var rol = normalizarEncabezado(fila[columnaRol]);
-        return String(fila[columnaCorreo] || '').trim().toLowerCase() === correoBuscado &&
+        return String(fila[columnaDni] || '').trim() === dniBuscado &&
             rolesPermitidos.indexOf(rol) !== -1 &&
             String(fila[columnaClave] || '').trim() === claveBuscada;
     });
@@ -329,15 +344,15 @@ function doPost(e) {
     }
 
     if (accion === 'listarClientesAdmin') {
-        if (!validarAdmin(data.correoAdmin, data.claveAdmin)) {
-            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Correo, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
+        if (!validarAdmin(data.dniAdmin, data.claveAdmin)) {
+            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'DNI, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
         }
         return listarClientesAdmin();
     }
 
     if (accion === 'actualizarSello') {
-        if (!validarAdmin(data.correoAdmin, data.claveAdmin)) {
-            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Correo, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
+        if (!validarAdmin(data.dniAdmin, data.claveAdmin)) {
+            return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'DNI, contraseña o rol de administrador incorrectos.' })).setMimeType(ContentService.MimeType.JSON);
         }
         return actualizarSelloCliente(data);
     }
